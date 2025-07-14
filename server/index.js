@@ -4,11 +4,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import listEndpoints from 'express-list-endpoints'; // <-- IMPORT THE NEW PACKAGE
 
 dotenv.config();
 
 const app = express();
-// Using a fallback port is safer for local development
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
@@ -17,6 +17,8 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch(err => console.error('MongoDB connection error:', err));
+
+// ... (Your User Schema and all the routes are here, no changes needed) ...
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -30,39 +32,23 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// --- START: NEW TEST ROUTE ADDED FOR DEPLOYMENT DEBUGGING ---
-// This route helps us confirm if the server is running correctly.
-// If you can visit your Railway URL and see this message, the deployment is working.
 app.get("/", (req, res) => {
   res.status(200).send("User Dashboard Backend is running and online!");
 });
-// --- END OF NEW TEST ROUTE ---
-
 
 app.post('/api/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
-
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
-
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'User' 
-    });
-
+    const newUser = new User({ name, email, password: hashedPassword, role: 'User' });
     await newUser.save();
-
     res.status(201).json({ message: 'User registered successfully! Please log in.' });
   } catch (error) {
     res.status(500).json({ message: 'Server error during registration' });
@@ -72,11 +58,9 @@ app.post('/api/register', async (req, res) => {
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   if (!token) {
     return res.status(401).json({ message: 'Access token required' });
   }
-
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid token' });
@@ -86,11 +70,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-
 const isAdmin = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId);
-
     if (user && user.role === 'Admin') {
       next(); 
     } else {
@@ -117,10 +99,7 @@ app.post('/api/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
-    res.json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
-    });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -143,6 +122,11 @@ app.get('/api/me', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// --- THIS IS THE FINAL CHECK ---
+console.log("--- Registered API Endpoints ---");
+console.log(listEndpoints(app));
+// --------------------------------
 
 app.listen(PORT, () => {
   console.log(`Server running online on port ${PORT}`);
