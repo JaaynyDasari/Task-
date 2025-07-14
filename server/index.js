@@ -135,5 +135,5 @@ app.get('/api/me', authenticateToken, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running online on port ${PORT}`);
 });
