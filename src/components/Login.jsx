@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // <-- IMPORT LINK
+import { Link } from 'react-router-dom';
 import './Login.css';
 
 const Login = ({ onLogin }) => {
@@ -16,7 +16,9 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      // --- THIS IS THE LINE TO CHANGE ---
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
+        // ---------------------------------
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -54,7 +56,6 @@ const Login = ({ onLogin }) => {
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
-        {}
         <div className="demo-section">
           <p>Don't have an account? <Link to="/signup">Create one</Link></p>
         </div>

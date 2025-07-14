@@ -26,7 +26,9 @@ const Dashboard = ({ onLogout }) => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
+      // --- THIS IS THE CORRECTED LINE ---
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users`, {
+        // ---------------------------------
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -36,7 +38,9 @@ const Dashboard = ({ onLogout }) => {
         const data = await response.json();
         setUsers(data);
       } else {
-        setError('Failed to fetch users');
+        // Handle cases where the token is expired or the user is not an admin
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to fetch users.');
       }
     } catch (error) {
       setError('Network error. Please check if the server is running.');
@@ -144,7 +148,7 @@ const Dashboard = ({ onLogout }) => {
         </div>
 
         <div className="users-section">
-          {filteredUsers.length === 0 ? (
+          {filteredUsers.length === 0 && !error ? (
             <div className="no-results">
               <h3>No users found</h3>
               <p>
