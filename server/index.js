@@ -8,7 +8,8 @@ import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+// Using a fallback port is safer for local development
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -28,6 +29,15 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+
+// --- START: NEW TEST ROUTE ADDED FOR DEPLOYMENT DEBUGGING ---
+// This route helps us confirm if the server is running correctly.
+// If you can visit your Railway URL and see this message, the deployment is working.
+app.get("/", (req, res) => {
+  res.status(200).send("User Dashboard Backend is running and online!");
+});
+// --- END OF NEW TEST ROUTE ---
+
 
 app.post('/api/register', async (req, res) => {
   try {
